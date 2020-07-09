@@ -1,0 +1,91 @@
+﻿@model HospitalManagement.ViewModels.PatientsData
+
+<div class="modal fade" id="addPatientModal" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="registerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="registerModalLabel">Patient Registration</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="closeBtn">
+                    <span aria-hidden="true" class="text-white">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body bg-light">
+                <form id="userRegistrationForm">
+                    <input type="hidden" value="" id="patientHdInput" />
+                    <span id="HeadError"></span>
+                    <div class="form-group d-md-flex">
+                        <div class="col-md-6  p-0 mr-5">
+                            <div class="d-md-flex">
+                                <label for="ptName" class="col-md-2 p-0 mr-2">Name:</label>
+                                @*<input type="text" class="form-control" id="ptName" placeholder="Name">*@
+                                @Html.TextBoxFor(m => m.Name, new { @class = "form-control col-md-8 m-0", id = "ptName", placeholder = "Name", autofocus = "" })
+
+                            </div>
+                            @*<span id="ptNameError"></span>*@
+                            @Html.ValidationMessageFor(m => m.Name, "", new { @class = "input-msg-error" })
+                        </div>
+                        <div class="col-md-6 p-0">
+                            <div class="d-md-flex">
+                                <label for="ptEmail" class="col-md-2 p-0 mr-2">Email:</label>
+                                @*<input type="email" class="form-control" id="ptEmail" placeholder="Email">*@
+                                @Html.TextBoxFor(m => m.Email, new { @class = "form-control col-md-8 m-0", id = "ptEmail", placeholder = "Email" })
+
+                            </div>
+                            @*<span id="ptEmailError"></span>*@
+                            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "input-msg-error" })
+                        </div>
+                    </div>
+                    <div class="form-group d-md-flex">
+                        <div class="col-md-6 p-0 mr-5">
+                            <div class="d-md-flex">
+                                <label for="ptPhone" class="col-md-2 p-0  mr-2">Phone:</label>
+                                @*<input type="text" class="form-control" id="ptPhone" placeholder="Phone Number">*@
+                                @Html.TextBoxFor(m => m.Phone, new { @class = "form-control col-md-8 m-0", id = "ptPhone", placeholder = "Phone Number" })
+
+                            </div>
+                            @*<span id="ptPhoneError"></span>*@
+                            @Html.ValidationMessageFor(m => m.Phone, "", new { @class = "input-msg-error" })
+                        </div>
+                        <div class="col-md-6 p-0">
+                            <div class="d-md-flex">
+                                <label for="ptDOB" class="col-md-2 p-0  mr-2">DOB:</label>
+                                @*<input type="date" class="form-control" id="ptDOB" placeholder="DOB">*@
+                                @Html.TextBoxFor(m => m.DOB, new { @class = "form-control col-md-8 m-0", id = "ptDOB", type = "date" })
+
+                            </div>
+                            @*<span id="ptDOBError"></span>*@
+                            @Html.ValidationMessageFor(m => m.DOB, "", new { @class = "input-msg-error" })
+                        </div>
+                    </div>
+                    <div class="form-group p-0">
+                        <div class="d-md-flex">
+                            <label for="ptAddress" class="col-md-1 p-0  mr-2">Address:</label>
+                            @*<textarea class="form-control" id="ptAddress" rows="3"></textarea>*@
+                            @Html.TextAreaFor(m => m.Address, new { @class = "form-control col-md-10 m-0", id = "ptAddress", rows = "3" })
+                        </div>
+                        @Html.ValidationMessageFor(m => m.Address, "", new { @class = "input-msg-error" })
+                    </div>
+                    <div class="form-group">
+                        <div class="d-md-flex">
+                            <div class="col-md-1  mr-2 p-0">Allergies:</div>
+                            <div class="col-md-8 p-0" id="checkboxDiv">
+                                @*<div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="gridCheck1">
+                                        <label class="form-check-label" for="gridCheck1">
+                                            Example checkbox
+                                        </label>
+                                    </div>*@
+                            </div>
+                        </div>
+                        <span id="checkboxError" class="ml-5 pl-3"></span>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="userRegisterBtn">Submit</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="ptRegistrationCloseBtn">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,401 @@
+﻿
+@{
+    ViewBag.Title = "UserData";
+}
+<input type="hidden" value="@Session["UserId"]" id="userHdInput" />
+
+<div class="mt-5">
+
+
+    <div class="d-md-flex col-md-12 p-0">
+        <div class="form-group">
+            <select class="form-control" id="downloadPatientData">
+                <option value="-1">-Download Patient Data-</option>
+                <option value="1">Download As Excel</option>
+                <option value="2">Download As PDF</option>
+            </select>
+        </div>
+        <div class="ml-auto">
+            <button type="button" class="btn btn-info mb-3" id="addPatientBtn"
+                    data-toggle="modal" data-target="#addPatientModal">
+                <i class="fas fa-plus mr-2"></i>Add Patient
+            </button>
+        </div>
+    </div>
+    <table class="table table-striped" id="pateintTableId" style="width:100%">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Pateint Name</th>
+                <th>Address</th>
+                <th>Email</th>
+                <th>DOB</th>
+                <th>Phone Number</th>
+                <td></td>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+@* Modal Section *@
+
+@Html.Partial("PatientRegistration")
+
+@section Scripts{
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/jquery.dataTables.min.js"
+            integrity="sha256-L4cf7m/cgC51e7BFPxQcKZcXryzSju7VYBKJLOKPHvQ="
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/dataTables.bootstrap4.min.js"
+            integrity="sha256-A8HQsn/9uXt+VRkaLhWtj7KMC8bYT76r3IB7iTqDtLo="
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.4.0/bootbox.min.js"
+            integrity="sha256-sfG8c9ILUB8EXQ5muswfjZsKICbRIJUG/kBogvvV5sY="
+            crossorigin="anonymous"></script>
+
+    <script>
+        const DOWNLOADASEXCEL = 1;
+        const DOWNLOADASPDF = 2;
+        var table = null;
+        $(document).ready(function () {
+
+            getPatientData();
+            getAllergies();
+            restrictDate();
+            eventHandler();
+
+
+        });
+        function eventHandler() {
+            $("#userRegisterBtn").click(function (e) {
+                e.preventDefault();
+                addPatientData();
+            });
+            $("#addPatientBtn, #ptRegistrationCloseBtn,#closeBtn").click(function (e) {
+                e.preventDefault();
+                emptyTextBoxes();
+            });
+            $('#addPatientModal').on('shown.bs.modal', function () {
+                $('#ptName').focus();
+            });
+
+            $('#logOutList').show();
+
+            dataTableHandler();
+            $('#downloadPatientData').change(function () {
+                var value = $(this).val();
+                var userId = $("#userHdInput").val();
+                if (value == DOWNLOADASEXCEL) {
+                    //downloadDataAsExcel(userId);
+                    window.location.href = '/ExportData/ExportToExcel/' + userId;
+                } else if (value == DOWNLOADASPDF){
+                    //downloadDataAsPDF(userId);
+                    window.location.href = '/ExportData/ExportToPDF/' + userId;
+                }
+                $("#downloadPatientData").val("-1");
+            });
+        }
+        function getPatientData() {
+            var userId = $("#userHdInput").val();
+            //console.log(userId);
+            table = $("#pateintTableId").DataTable({
+                "bServerSide": true,
+                "filter": true,
+                "orderMulti": false,
+                "destroy": true,
+                "bAutoWidth": true,
+                "ordering": true,
+                "ajax": {
+                    "url": '/api/user/patients',
+                    "DataProp": "aaData",
+                    data: { id: userId }
+                    //success: function (result) {
+                    //    console.log(result);
+                    //}
+                },
+                "bProcessing": true,
+                "aoColumns": [
+                    {
+                        "className": 'details-control',
+                        "orderable": false,
+                        "data": null,
+                        "defaultContent": '<i class="fas fa-plus-circle"></i>'
+                    },
+                    { "mData": "Name", "name": "Name" },
+                    { "mData": "Address", "name": "Address" },
+                    { "mData": "Email", "name": "Email" },
+                    { "mData": "DOB", "name": "DOB" },
+                    { "mData": "Phone", "name": "Phone" },
+                    { "mData": "PatientAllergies", "name": "PatientAllergies", "visible": false, "searchable": false },
+                    {
+                        "mData": "PatientId",
+                        render: function (data) {
+                            return "<span data-patient-id=" + data + " class='js-edit m-1'><i class=' far fa-edit'></i></span>"
+                                + "<span data-patient-id=" + data + " class='js-delete'><i class=' fas fa-trash-alt'></i></span>";
+                        }
+                    }
+                ]
+            });
+            $('#pateintTableId tbody').on('click', 'td.details-control', function (e) {
+                e.preventDefault();
+                var tr = $(this).closest('tr');
+                var row = table.row(tr);
+
+                if (row.child.isShown()) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                }else {
+                    // Open this row
+                    row.child(format(row.data())).show();
+                    tr.addClass('shown');
+                }
+            });
+        }
+
+        function dataTableHandler() {
+            $('#pateintTableId').off().on('click', '.js-delete', function (event) {
+                event.preventDefault();
+                var userId = $("#userHdInput").val();
+                var buttonId = $(this).attr("data-patient-id");
+                bootbox.confirm("Are you sure you want to delete?", function (result) {
+                    if (result) {
+                        $.ajax({
+                            url: '@Url.Action("DeleteById","Patient")',
+                            "dataType": "json",
+                            "contentType": "application/json; charset=utf-8",
+                            "type": "GET",
+                            data: {
+                                id: buttonId,
+                                userId: userId
+                            },
+                            success: function (response) {
+                                if (response.responseText == "Success") {
+                                    table.row($(this).parents("tr")).remove().draw();
+                                    toastr.success("Patient Data Deleted Successfully");
+                                }
+                            },
+                            error: function () {
+                                toastr.error("Something Went Wrong.");
+                            }
+                        });
+                    }
+                });
+            });
+            $('#pateintTableId').on('click', '.js-edit', function (event) {
+                event.preventDefault();
+                //emptyTextBoxes();
+                var buttonId = $(this).attr("data-patient-id");
+                $.ajax({
+                    url: '@Url.Action("FindById","Patient")',
+                    "dataType": "json",
+                    "contentType": "application/json; charset=utf-8",
+                    "type": "GET",
+                    data: { id: buttonId},
+                    success: function (response) {
+                        if (response.responseText == "Success") {
+                            console.log(response.data);
+                            $(":checkbox").attr("checked", false);
+
+                            var data = response.data;
+                            var formattedDOB = formatDate(data.DOB);
+                            $('#addPatientModal').modal('show');
+                            $("#ptName").val(data.Name);
+                            $("#ptEmail").val(data.Email);
+                            $("#ptPhone").val(data.Phone);
+                            $("#ptDOB").val(formattedDOB);
+                            $("#ptAddress").val(data.Address);
+                            $("#patientHdInput").val(data.PatientId);
+
+                            $.each(data.AllergiesData, function (index,value) {
+                                $('#checkboxDiv').find('input[value="' + value.AllergyId+'"]').prop('checked', true);
+                            });
+                        }
+                    },
+                    error: function () {
+                        toastr.error("Something Went Wrong.");
+                    }
+                });
+            }); 
+        }
+        function formatDate(dateObject) {
+            var d = new Date(dateObject);
+            var day = d.getDate();
+            var month = d.getMonth() + 1;
+            var year = d.getFullYear();
+            if (day < 10) {
+                day = "0" + day;
+            }
+            if (month < 10) {
+                month = "0" + month;
+            }
+            var date = year + "-" + month + "-" + day;
+
+            return date;
+        };
+        function format(d) {
+            // `d` is the original data object for the row
+            return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">' +
+                '<tr>' +
+                '<td>Allergies :</td>' +
+                '<td>' + d.PatientAllergies + '</td>' +
+                '</tr>' +
+                '</table>';
+        }
+        function getAllergies() {
+            $.ajax({
+                url: '/api/Allergy',
+                type: 'GET',
+                success: function (data) {
+                    console.log(data);
+                    if (data != null) {
+                        var checkboxHtml = '';
+                        $.each(data, function (index, value) {
+                            checkboxHtml += '<div class="form-check">'
+                                + '<input class="form-check-input" type ="checkbox" value ="' + value.Id + '" name="checkAll" >'
+                                + '<label class="form-check-label" for="' + value.Id + '">'
+                                + value.AllergyName
+                                + '</label>'
+                                + '</div >'
+                        });
+                        $("#checkboxDiv").append(checkboxHtml);
+                    }
+                },
+                error: function (ex) {
+                    console.log('Error in Operation' + ex);
+                    toastr.error("Something Went Wrong.");
+                }
+            });
+        }
+        function addPatientData() {
+            var data = new Object();
+            data.PatientId = $("#patientHdInput").val();
+            data.Name = $("#ptName").val().trim();
+            data.Email = $("#ptEmail").val().trim();
+            data.Phone = $("#ptPhone").val().trim();
+            data.DOB = $("#ptDOB").val().trim();
+            data.Address = $("#ptAddress").val().trim();
+            data.CreatedBy = $("#userHdInput").val();
+
+            var allergyArray = [];
+            $(':checkbox:checked').each(function (i) {
+                allergyArray[i] = $(this).val();
+            });
+            //var checked_checkboxes = $("#checkboxDiv input[type=checkbox]:checked");
+
+            if ($("#userRegistrationForm").valid()) {
+                validateCheckBoxes(allergyArray);
+                //$("#HeadError").val("");
+                $.ajax({
+                    url: '/Patient/Create',
+                    type: 'POST',
+                    data: {
+                        patient: data,
+                        allergyIds: allergyArray
+                    },
+                    success: function (data) {
+                        console.log(data);
+                        toastr.success("Patient Data Successfully Inserted!!");
+                        $('#addPatientModal').modal('hide');
+                        $('#pateintTableId').empty();
+                        getPatientData();
+                        emptyTextBoxes()
+                    },
+                    error: function (ex) {
+                        toastr.error("Something Went Wrong.");
+                        console.log('Error in Operation' + ex);
+                    }
+                });
+            } else {
+                validateCheckBoxes(allergyArray);
+                return false;
+            }
+        }
+        function downloadDataAsExcel(userId) {
+
+            var id = userId;
+            
+            //$.ajax({
+            //    url: '/ExportData/ExportToExcel',
+            //    type: 'Get',
+            //    data: { id: userId },
+            //    success: function (data) {
+            //        alert(data.responseText);
+            //        console.log(data);
+            //    },
+            //    error: function (ex) {
+            //        toastr.error("Something Went Wrong.");
+            //        console.log('Error in Operation' + ex);
+            //    }
+            //});
+        }
+        function downloadDataAsPDF() {
+            $.ajax({
+                url: '/Patient/Create',
+                type: 'Get',
+                data: {
+                    patient: data,
+                    allergyIds: allergyArray
+                },
+                success: function (data) {
+
+                },
+                error: function (ex) {
+                    toastr.error("Something Went Wrong.");
+                    console.log('Error in Operation' + ex);
+                }
+            });
+        }
+        function validateCheckBoxes(allergyArray) {
+            if (allergyArray.length == 0) {
+                $("#checkboxError").text("Please Select an allergy.").css("color", "red");
+                return false;
+            } else {
+                $("#checkboxError").text("");
+            }
+        }
+        function restrictDate() {
+            var dtToday = new Date();
+
+            var month = dtToday.getMonth() + 1;
+            var day = dtToday.getDate();
+            var year = dtToday.getFullYear();
+            if (month < 10)
+                month = '0' + month.toString();
+            if (day < 10)
+                day = '0' + day.toString();
+
+            var maxDate = year + '-' + month + '-' + day;
+            $('#ptDOB').attr('max', maxDate);
+        }
+
+        function emptyTextBoxes() {
+            $("#ptName").val("");
+            $("#ptEmail").val("");
+            $("#ptPhone").val("");
+            $("#ptDOB").val("");
+            $("#ptAddress").val("");
+            $("#patientHdInput").val("");
+            $("#HeadError").val("");
+            $('.field-validation-error').text("");
+            $("#checkboxError").text("");
+
+            //$('input[type="checkbox"]').attr("checked", false);
+            $('#checkboxDiv').find('input[name="checkAll"]').each(function () {
+                    $(this).prop('checked', false);
+            });
+
+            $('.input-validation-error').addClass('input-validation-valid');
+            $('.input-validation-error').removeClass('input-validation-error');
+            //Removes validation message after input-fields
+            $('.field-validation-error').addClass('field-validation-valid');
+            $('.field-validation-error').removeClass('field-validation-error');
+            //Removes validation summary
+            $('.validation-summary-errors').addClass('validation-summary-valid');
+            $('.validation-summary-errors').removeClass('validation-summary-errors');
+            $('.field-validation-error').html("");
+        }
+    </script>
+}

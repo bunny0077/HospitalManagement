@@ -1,0 +1,18 @@
+﻿
+.footerDiv{
+    position:fixed;
+    bottom:0;
+    width: 100%;
+}
+.field-validation-error{
+    color:red;
+}   
+.input-validation-error{
+    border:2px solid red;
+}
+.input-msg-error {
+    margin-left: 70px!important;
+}
+#checkboxError {
+    /*margin-left: 70px !important;*/
+}
