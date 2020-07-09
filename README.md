@@ -1,6 +1,6 @@
 # HospitalManagement
-Hospital Management
-This is a Assignment based on pateints Records in Asp.net Mvc.
+
+This is a Assignment based on Pateints Records in Asp.net Mvc.
 In this Project you can SignIn, Signup and Forgot Password and you can 
 add, edit and delete Patient Records .
 
